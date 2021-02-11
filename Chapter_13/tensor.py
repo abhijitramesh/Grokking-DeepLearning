@@ -48,6 +48,8 @@ class Tensor(object):
                 if(self.creation_op =="add"):
                     self.creators[0].backward(grad)
                     self.creators[1].backward(grad)
+                if(self.creation_op=="neg"):
+                    self.creators[0].backward(self.grad.__neg__())
 
     def __add__(self,other):
         if(self.autograd and other.autograd):
@@ -57,6 +59,13 @@ class Tensor(object):
                       creation_op="add")
         return Tensor(self.data+other.data)
 
+    def __neg__(self):
+        if(self.autograd):
+            return Tensor(self.data * -1,
+                          autograd=True,
+                          creators=[self],
+                          creation_op="neg")
+        return Tensor(self.data * -1)
 
     def __repr__(self):
         return str(self.data.__repr__())
