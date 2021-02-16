@@ -168,8 +168,9 @@ class Tensor (object):
                           creation_op="mm")
         return Tensor(self.data.dot(x.data))
 
-   def __repr__(self):
+    def __repr__(self):
         return str(self.data.__repr__())
 
     def __str__(self):
         return str(self.data.__str__())
+    
