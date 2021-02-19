@@ -98,6 +98,14 @@ class Tensor (object):
                 if(self.creation_op == "neg"):
                     self.creators[0].backward(self.grad.__neg__())
 
+                if (self.creation_op == "sigmoid"):
+                    ones = Tensor(np.ones_like(self.grad.data))
+                    self.creators[0].backward(self.grad * (self * (ones - self)))
+
+                if (self.creation_op == "tanh"):
+                    ones = Tensor(np.ones_like(self.grad.data))
+                    self.creators[0].backward(self.grad * (ones - (self * self)))
+
     def __add__(self, other):
         if(self.autograd and other.autograd):
             return Tensor(self.data + other.data,
@@ -167,7 +175,21 @@ class Tensor (object):
                           creators=[self,x],
                           creation_op="mm")
         return Tensor(self.data.dot(x.data))
+    def sigmoid(self):
+        if(self.autograd):
+            return Tensor(1/(1+np.exp(-self.data)),
+                          autograd=True,
+                          creators=[self],
+                          creation_op="sigmoid")
+        return Tensor(1/1+np.exp(-self.data))
 
+    def tanh(self):
+        if(self.autograd):
+            return Tensor((np.tanh(self.data)),
+                          autograd=True,
+                          creators=[self],
+                          creation_op="tanh")
+        return Tensor(np.tanh(self.data))
     def __repr__(self):
         return str(self.data.__repr__())
 
