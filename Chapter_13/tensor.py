@@ -98,13 +98,21 @@ class Tensor (object):
                 if(self.creation_op == "neg"):
                     self.creators[0].backward(self.grad.__neg__())
 
-                if (self.creation_op == "sigmoid"):
+                if(self.creation_op == "sigmoid"):
                     ones = Tensor(np.ones_like(self.grad.data))
                     self.creators[0].backward(self.grad * (self * (ones - self)))
 
-                if (self.creation_op == "tanh"):
+                if(self.creation_op == "tanh"):
                     ones = Tensor(np.ones_like(self.grad.data))
                     self.creators[0].backward(self.grad * (ones - (self * self)))
+
+                if(self.creation_op == "index_select"):
+                    new_grad = np.zeros_like(self.creators[0].data)
+                    indices_ = self.index_select_indices.data.flatten()
+                    grad_ = grad.data.reshape(len(indices_), -1)
+                    for i in range(len(indices_)):
+                        new_grad[indices_[i]] += grad_[i]
+                    self.creators[0].backward(Tensor(new_grad))
 
     def __add__(self, other):
         if(self.autograd and other.autograd):
@@ -175,24 +183,60 @@ class Tensor (object):
                           creators=[self,x],
                           creation_op="mm")
         return Tensor(self.data.dot(x.data))
+
     def sigmoid(self):
         if(self.autograd):
-            return Tensor(1/(1+np.exp(-self.data)),
+            return Tensor(1 / (1 + np.exp(-self.data)),
                           autograd=True,
                           creators=[self],
                           creation_op="sigmoid")
-        return Tensor(1/1+np.exp(-self.data))
+        return Tensor(1 / (1 + np.exp(-self.data)))
 
     def tanh(self):
         if(self.autograd):
-            return Tensor((np.tanh(self.data)),
+            return Tensor(np.tanh(self.data),
                           autograd=True,
                           creators=[self],
                           creation_op="tanh")
         return Tensor(np.tanh(self.data))
+
+    def index_select(self, indices):
+
+        if(self.autograd):
+            new = Tensor(self.data[indices.data],
+                         autograd=True,
+                         creators=[self],
+                         creation_op="index_select")
+            new.index_select_indices = indices
+            return new
+        return Tensor(self.data[indices.data])
+
+    def cross_entropy(self, target_indices):
+
+        temp = np.exp(self.data)
+        softmax_output = temp / np.sum(temp,
+                                       axis=len(self.data.shape)-1,
+                                       keepdims=True)
+
+        t = target_indices.data.flatten()
+        p = softmax_output.reshape(len(t),-1)
+        target_dist = np.eye(p.shape[1])[t]
+        loss = -(np.log(p) * (target_dist)).sum(1).mean()
+
+        if(self.autograd):
+            out = Tensor(loss,
+                         autograd=True,
+                         creators=[self],
+                         creation_op="cross_entropy")
+            out.softmax_output = softmax_output
+            out.target_dist = target_dist
+            return out
+
+        return Tensor(loss)
+    
     def __repr__(self):
         return str(self.data.__repr__())
 
     def __str__(self):
         return str(self.data.__str__())
-    
+
