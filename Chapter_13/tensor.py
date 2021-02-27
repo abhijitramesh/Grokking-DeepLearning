@@ -233,7 +233,7 @@ class Tensor (object):
             return out
 
         return Tensor(loss)
-    
+
     def __repr__(self):
         return str(self.data.__repr__())
 
