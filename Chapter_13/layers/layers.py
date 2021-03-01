@@ -1,5 +1,5 @@
 import numpy as np
-from tensor import Tensor
+from Chapter_13.tensor import Tensor
 
 class Layer(object):
     def __init__(self):
@@ -50,6 +50,18 @@ class Sigmoid(Layer):
 
     def forward(self, input):
         return input.sigmoid()
+class Embedding(Layer):
+    def __init__(self,vocab_size,dim):
+        super().__init__()
+
+        self.vocab_size = vocab_size
+        self.dim = dim
+
+        weight = np.random.rand(vocab_size,dim)-0.5 / dim
+        self.weight = Tensor(weight,autograd=True)
+
+    def forward(self,input):
+        return self.weight.index_select(input)
 class RNNCell(Layer):
 
     def __init__(self, n_input, n_hidden, n_output, activation='sigmoid'):

@@ -1,4 +1,4 @@
-from layers.layers import Layer
+from Chapter_13.layers.layers import Layer
 class MSELoss(Layer):
 
     def __init__(self):
