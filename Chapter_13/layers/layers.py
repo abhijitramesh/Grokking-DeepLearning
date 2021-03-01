@@ -8,16 +8,21 @@ class Layer(object):
     def get_parameters(self):
         return self.parameters
 class Linear(Layer):
-    def __init__(self,n_inputs,n_outputs):
+    def __init__(self,n_inputs,n_outputs,bias=True):
         super().__init__()
+        self.use_bias = bias
         W = np.random.randn(n_inputs,n_outputs)*np.sqrt(2.0/(n_inputs))
         self.weights = Tensor(W,autograd=True)
-        self.bias = Tensor(np.zeros(n_outputs),autograd=True)
+        if self.use_bias:
+            self.bias = Tensor(np.zeros(n_outputs),autograd=True)
 
         self.parameters.append(self.weights)
-        self.parameters.append(self.bias)
+        if self.use_bias:
+            self.parameters.append(self.bias)
     def forward(self,input):
-        return input.mm(self.weights)+self.bias.expand(0,len(input.data))
+        if self.use_bias:
+            return input.mm(self.weights)+self.bias.expand(0,len(input.data))
+        return input.mm(self.weights)
 
 class Sequential(Layer):
     def __init__(self,layers=list()):
